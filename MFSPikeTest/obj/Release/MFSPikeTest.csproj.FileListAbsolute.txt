@@ -1,0 +1,6 @@
+C:\Source\XPCoaching\MFSPikeTest\MFSPikeTest\bin\Release\MFSPikeTest.exe.config
+C:\Source\XPCoaching\MFSPikeTest\MFSPikeTest\bin\Release\MFSPikeTest.exe
+C:\Source\XPCoaching\MFSPikeTest\MFSPikeTest\bin\Release\MFSPikeTest.pdb
+C:\Source\XPCoaching\MFSPikeTest\MFSPikeTest\obj\Release\MFSPikeTest.csprojResolveAssemblyReference.cache
+C:\Source\XPCoaching\MFSPikeTest\MFSPikeTest\obj\Release\MFSPikeTest.exe
+C:\Source\XPCoaching\MFSPikeTest\MFSPikeTest\obj\Release\MFSPikeTest.pdb
