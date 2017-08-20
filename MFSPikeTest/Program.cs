@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 
 namespace MFSPikeTest
 {
     public class Program
     {
         private const int FactorSize = 200;
-        private const double Maximum = 10.0;
-        private const double Minimum = -10.0;
+        private const float Maximum = 10.0f;
+        private const float Minimum = -10.0f;
 
         public static void Main(string[] args)
         {
@@ -19,6 +20,7 @@ namespace MFSPikeTest
             //var linqTestResults = new List<long>();
             //var forTestResults = new List<long>();
             var forASTestResults = new List<long>();
+            var numericsVectorResults = new List<long>();
 
 
             for (var i = 0; i < numberOfTests; i++)
@@ -29,56 +31,65 @@ namespace MFSPikeTest
 
                 //var linqResult = RunTest(testData.Key, testData.Value, GetScoresWithLinq);
                 //var forResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedFors);
-                var forASResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedForsArraySort);
+                var forASResult = RunTest<float[]>(testData.Key, testData.Value, GetScoresWithNestedForsArraySort);
+                var numericsVectorResult = 
+                    RunTest<Vector<float>>(ToVector(testData.Key), new Vector<float>(testData.Value), GetScoresWithSystemNumericsVector);
 
                 //linqTestResults.Add(linqResult.Value);
                 //forTestResults.Add(forResult.Value);
                 forASTestResults.Add(forASResult.Value);
+                numericsVectorResults.Add(numericsVectorResult.Value);
             }
 
-            //Console.WriteLine("GetScoresWithLinq (ns): " + ((double)linqTestResults.Average() / Stopwatch.Frequency) * 1000000);
-            //Console.WriteLine("GetScoresWithNestedFors (ns): " + ((double)forTestResults.Average() / Stopwatch.Frequency) * 1000000);
-            Console.WriteLine("\r\nGetScoresWithNestedForsArraySort (ms): " + ((double)forASTestResults.Average() / Stopwatch.Frequency) * 1000);
+            //Console.WriteLine("GetScoresWithLinq (ns): " + ((float)linqTestResults.Average() / Stopwatch.Frequency) * 1000000);
+            //Console.WriteLine("GetScoresWithNestedFors (ns): " + ((float)forTestResults.Average() / Stopwatch.Frequency) * 1000000);
+            Console.WriteLine("\r\nGetScoresWithNestedForsArraySort (ms): " + ((float)forASTestResults.Average() / Stopwatch.Frequency) * 1000);
+            Console.WriteLine("\r\nGetScoresWithSystemNumericsVector (ms): " + ((float)numericsVectorResults.Average() / Stopwatch.Frequency) * 1000);
         }
 
-        private static KeyValuePair<double[], long> RunTest(
-            double[][] productFactors, double[] customerFactor, Func<double[][], double[], double[]> testMethod)
+        private static KeyValuePair<float[], long> RunTest<T>(
+            T[] productFactors, T customerFactor, Func<T[], T, float[]> testMethod)
         {
             var stopwatch = Stopwatch.StartNew();
             var result = testMethod(productFactors, customerFactor);
             stopwatch.Stop();
-            return new KeyValuePair<double[], long>(result, stopwatch.ElapsedTicks);
+            return new KeyValuePair<float[], long>(result, stopwatch.ElapsedTicks);
         }
 
-        private static KeyValuePair<double[][], double[]> GenerateTestDataSingle(int seed, int factorSize, int nProducts)
+        private static Vector<float>[] ToVector(IEnumerable<float[]> testData)
+        {
+            return testData.Select(x => new Vector<float>(x)).ToArray();
+        }
+
+        private static KeyValuePair<float[][], float[]> GenerateTestDataSingle(int seed, int factorSize, int nProducts)
         {
             var random = new Random(seed);
 
-            var customerFactor = GenerateDoubleArray(random, factorSize);
+            var customerFactor = GeneratefloatArray(random, factorSize);
 
-            var productFactors = new double[nProducts][];
+            var productFactors = new float[nProducts][];
             for (var i = 0; i < nProducts; i++)
             {
-                productFactors[i] = GenerateDoubleArray(random, factorSize);
+                productFactors[i] = GeneratefloatArray(random, factorSize);
             }
 
-            return new KeyValuePair<double[][], double[]>(productFactors, customerFactor);
+            return new KeyValuePair<float[][], float[]>(productFactors, customerFactor);
         }
 
-        private static double[] GenerateDoubleArray(Random random, int factorSize)
+        private static float[] GeneratefloatArray(Random random, int factorSize)
         {
-            var result = new double[factorSize];
+            var result = new float[factorSize];
 
             for (var i = 0; i < factorSize; i++)
             {
                 var x = random.NextDouble() * (Maximum - Maximum) + Minimum;
-                result[i] = x;
+                result[i] = (float)x;
             }
 
             return result;
         }
 
-        public static double[] GetScoresWithLinq(double[][] productFactors, double[] customerFactor)
+        public static float[] GetScoresWithLinq(float[][] productFactors, float[] customerFactor)
         {
             return
                 productFactors
@@ -90,9 +101,9 @@ namespace MFSPikeTest
                     .ToArray();
         }
 
-        public static double[] GetScoresWithNestedFors(double[][] productFactors, double[] customerFactor)
+        public static float[] GetScoresWithNestedFors(float[][] productFactors, float[] customerFactor)
         {
-            var sums = new double[productFactors.Length];
+            var sums = new float[productFactors.Length];
             for (var i = 0; i < productFactors.Length; i++)
             {
                 var productFactor = productFactors[i];
@@ -102,25 +113,39 @@ namespace MFSPikeTest
                 {
                     sum += productFactor[j] * customerFactor[j];
                 }
-                sums[i] = sum;
+                sums[i] = (float)sum;
             }
 
             return sums.OrderByDescending(x => x).ToArray();
         }
 
-        public static double[] GetScoresWithNestedForsArraySort(double[][] productFactors, double[] customerFactor)
+        public static float[] GetScoresWithNestedForsArraySort(float[][] productFactors, float[] customerFactor)
         {
-            var scores = new double[productFactors.Length];
+            var scores = new float[productFactors.Length];
             for (var i = 0; i < productFactors.Length; i++)
             {
                 var productFactor = productFactors[i];
 
-                var sum = 0.0;
+                var sum = 0.0f;
                 for (var j = 0; j < productFactor.Length; j++)
                 {
                     sum += productFactor[j] * customerFactor[j];
                 }
                 scores[i] = sum;
+            }
+
+            Array.Sort(scores);
+            Array.Reverse(scores);
+
+            return scores;
+        }
+
+        public static float[] GetScoresWithSystemNumericsVector(Vector<float>[] productVectors, Vector<float> customerVector)
+        {
+            var scores = new float[productVectors.Length];
+            for (var i = 0; i < productVectors.Length; i++)
+            {
+                scores[i] = Vector.Dot(productVectors[i], customerVector);
             }
 
             Array.Sort(scores);
