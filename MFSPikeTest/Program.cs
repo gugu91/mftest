@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using FluentAssertions;
 
 namespace MFSPikeTest
 {
@@ -31,10 +32,11 @@ namespace MFSPikeTest
 
                 //var linqResult = RunTest(testData.Key, testData.Value, GetScoresWithLinq);
                 //var forResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedFors);
-                var forASResult = RunTest<float[]>(testData.Key, testData.Value, GetScoresWithNestedForsArraySort);
+                var forASResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedForsArraySort);
                 var numericsVectorResult = 
-                    RunTest<Vector<float>>(ToVector(testData.Key), new Vector<float>(testData.Value), GetScoresWithSystemNumericsVector);
+                    RunTest(ToFactor(testData.Key), new Factor(testData.Value), GetScoresWithSystemNumericsVector);
 
+                numericsVectorResult.Key.Should().ContainInOrder(forASResult.Key);
                 //linqTestResults.Add(linqResult.Value);
                 //forTestResults.Add(forResult.Value);
                 forASTestResults.Add(forASResult.Value);
@@ -56,9 +58,9 @@ namespace MFSPikeTest
             return new KeyValuePair<float[], long>(result, stopwatch.ElapsedTicks);
         }
 
-        private static Vector<float>[] ToVector(IEnumerable<float[]> testData)
+        private static Factor[] ToFactor(IEnumerable<float[]> testData)
         {
-            return testData.Select(x => new Vector<float>(x)).ToArray();
+            return testData.Select(x => new Factor(x)).ToArray();
         }
 
         private static KeyValuePair<float[][], float[]> GenerateTestDataSingle(int seed, int factorSize, int nProducts)
@@ -140,12 +142,12 @@ namespace MFSPikeTest
             return scores;
         }
 
-        public static float[] GetScoresWithSystemNumericsVector(Vector<float>[] productVectors, Vector<float> customerVector)
+        public static float[] GetScoresWithSystemNumericsVector(Factor[] productVectors, Factor customerVector)
         {
             var scores = new float[productVectors.Length];
             for (var i = 0; i < productVectors.Length; i++)
             {
-                scores[i] = Vector.Dot(productVectors[i], customerVector);
+                scores[i] = productVectors[i].DotProduct(customerVector);
             }
 
             Array.Sort(scores);
