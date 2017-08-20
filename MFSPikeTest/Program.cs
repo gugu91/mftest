@@ -32,9 +32,14 @@ namespace MFSPikeTest
 
                 //var linqResult = RunTest(testData.Key, testData.Value, GetScoresWithLinq);
                 //var forResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedFors);
-                var forASResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedForsArraySort);
+                var forASResult = RunTest<FactorUsingFloatArray>(
+                    testData.Key.Select(x => new FactorUsingFloatArray(x)).ToArray(), 
+                    new FactorUsingFloatArray(testData.Value), GetScoresWithNestedForsArraySort);
                 var numericsVectorResult = 
-                    RunTest(ToFactor(testData.Key), new Factor(testData.Value), GetScoresWithSystemNumericsVector);
+                    RunTest(
+                        testData.Key.Select(x => new FactorUsingNumericVector(x)).ToArray(), 
+                        new FactorUsingNumericVector(testData.Value), 
+                        GetScoresWithSystemNumericsVector);
 
                 numericsVectorResult.Key.Should().ContainInOrder(forASResult.Key);
                 //linqTestResults.Add(linqResult.Value);
@@ -56,11 +61,6 @@ namespace MFSPikeTest
             var result = testMethod(productFactors, customerFactor);
             stopwatch.Stop();
             return new KeyValuePair<float[], long>(result, stopwatch.ElapsedTicks);
-        }
-
-        private static Factor[] ToFactor(IEnumerable<float[]> testData)
-        {
-            return testData.Select(x => new Factor(x)).ToArray();
         }
 
         private static KeyValuePair<float[][], float[]> GenerateTestDataSingle(int seed, int factorSize, int nProducts)
@@ -121,19 +121,12 @@ namespace MFSPikeTest
             return sums.OrderByDescending(x => x).ToArray();
         }
 
-        public static float[] GetScoresWithNestedForsArraySort(float[][] productFactors, float[] customerFactor)
+        public static float[] GetScoresWithNestedForsArraySort(FactorUsingFloatArray[] productFactors, FactorUsingFloatArray customerFactor)
         {
             var scores = new float[productFactors.Length];
             for (var i = 0; i < productFactors.Length; i++)
             {
-                var productFactor = productFactors[i];
-
-                var sum = 0.0f;
-                for (var j = 0; j < productFactor.Length; j++)
-                {
-                    sum += productFactor[j] * customerFactor[j];
-                }
-                scores[i] = sum;
+                scores[i] = customerFactor.DotProduct(productFactors[i]);
             }
 
             Array.Sort(scores);
@@ -142,7 +135,7 @@ namespace MFSPikeTest
             return scores;
         }
 
-        public static float[] GetScoresWithSystemNumericsVector(Factor[] productVectors, Factor customerVector)
+        public static float[] GetScoresWithSystemNumericsVector(FactorUsingNumericVector[] productVectors, FactorUsingNumericVector customerVector)
         {
             var scores = new float[productVectors.Length];
             for (var i = 0; i < productVectors.Length; i++)

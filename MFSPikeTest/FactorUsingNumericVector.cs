@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace MFSPikeTest
 {
-    public struct Factor
+    public struct FactorUsingNumericVector
     {
         private readonly Vector<float>[] _values;
         private static int VectorSize => Vector<float>.Count;
         public int Length { get; }
         private int ValuesCount { get; }
 
-        public Factor(float[] values)
+        public FactorUsingNumericVector(float[] values)
         {
             Length = values.Length;
             ValuesCount = (int) Math.Ceiling((decimal) values.Length / VectorSize);
@@ -38,7 +38,7 @@ namespace MFSPikeTest
             return floats;
         }
 
-        public float DotProduct(Factor right)
+        public float DotProduct(FactorUsingNumericVector right)
         {
             var result = 0f;
             for (var i = 0; i < ValuesCount; i++)
