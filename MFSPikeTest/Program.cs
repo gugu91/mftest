@@ -23,25 +23,26 @@ namespace MFSPikeTest
             var forASTestResults = new List<long>();
             var numericsVectorResults = new List<long>();
 
-
+            Console.Write($"Number of tests: {numberOfTests}, Number of product factors: {nProducts}, Factor Size: {FactorSize}");
+            Console.WriteLine($"Vector.IsHardwareAccelerated = {Vector.IsHardwareAccelerated}");
+            Console.WriteLine($"Vector.Count = {Vector<float>.Count}");
             for (var i = 0; i < numberOfTests; i++)
             {
                 var testData = GenerateTestDataSingle(i, FactorSize, nProducts);
+                var floatTestData = 
+                    CastTestData(testData, array => new FactorUsingFloatArray(array));
+                var vectorTestData =
+                    CastTestData(testData, array => new FactorUsingNumericVector());
 
                 Console.Write("\rRunning test {0}", i + 1);
 
                 //var linqResult = RunTest(testData.Key, testData.Value, GetScoresWithLinq);
                 //var forResult = RunTest(testData.Key, testData.Value, GetScoresWithNestedFors);
-                var forASResult = RunTest<FactorUsingFloatArray>(
-                    testData.Key.Select(x => new FactorUsingFloatArray(x)).ToArray(), 
-                    new FactorUsingFloatArray(testData.Value), GetScoresWithNestedForsArraySort);
+                var forASResult = 
+                    RunTest(floatTestData.Key, floatTestData.Value, GetScoresWithNestedForsArraySort);
                 var numericsVectorResult = 
-                    RunTest(
-                        testData.Key.Select(x => new FactorUsingNumericVector(x)).ToArray(), 
-                        new FactorUsingNumericVector(testData.Value), 
-                        GetScoresWithSystemNumericsVector);
+                    RunTest(vectorTestData.Key, vectorTestData.Value, GetScoresWithSystemNumericsVector);
 
-                numericsVectorResult.Key.Should().ContainInOrder(forASResult.Key);
                 //linqTestResults.Add(linqResult.Value);
                 //forTestResults.Add(forResult.Value);
                 forASTestResults.Add(forASResult.Value);
@@ -51,7 +52,13 @@ namespace MFSPikeTest
             //Console.WriteLine("GetScoresWithLinq (ns): " + ((float)linqTestResults.Average() / Stopwatch.Frequency) * 1000000);
             //Console.WriteLine("GetScoresWithNestedFors (ns): " + ((float)forTestResults.Average() / Stopwatch.Frequency) * 1000000);
             Console.WriteLine("\r\nGetScoresWithNestedForsArraySort (ms): " + ((float)forASTestResults.Average() / Stopwatch.Frequency) * 1000);
-            Console.WriteLine("\r\nGetScoresWithSystemNumericsVector (ms): " + ((float)numericsVectorResults.Average() / Stopwatch.Frequency) * 1000);
+            Console.WriteLine("GetScoresWithSystemNumericsVector (ms): " + ((float)numericsVectorResults.Average() / Stopwatch.Frequency) * 1000);
+        }
+
+        private static KeyValuePair<T[], T> CastTestData<T>(KeyValuePair<float[][], float[]> testData, Func<float[], T> factoryMethod)
+        {
+            return new KeyValuePair<T[], T>(testData.Key.Select(factoryMethod).ToArray(),
+                factoryMethod(testData.Value));
         }
 
         private static KeyValuePair<float[], long> RunTest<T>(
