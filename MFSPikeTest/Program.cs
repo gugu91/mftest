@@ -10,8 +10,8 @@ namespace MFSPikeTest
     public class Program
     {
         private const int FactorSize = 200;
-        private const float Maximum = 10.0f;
-        private const float Minimum = -10.0f;
+        private const float Maximum = 1.0f;
+        private const float Minimum = 0.001f;
 
         public static void Main(string[] args)
         {
@@ -23,16 +23,23 @@ namespace MFSPikeTest
             var forASTestResults = new List<long>();
             var numericsVectorResults = new List<long>();
 
-            Console.Write($"Number of tests: {numberOfTests}, Number of product factors: {nProducts}, Factor Size: {FactorSize}");
-            Console.WriteLine($"Vector.IsHardwareAccelerated = {Vector.IsHardwareAccelerated}");
-            Console.WriteLine($"Vector.Count = {Vector<float>.Count}");
+            Console.WriteLine("Running with the following settings:");
+            Console.WriteLine($"- Number of tests: {numberOfTests}");
+            Console.WriteLine($"- Number of product factors: {nProducts}");
+            Console.WriteLine($"- Factor Size: {FactorSize}");
+            Console.WriteLine($"- Vector.IsHardwareAccelerated = {Vector.IsHardwareAccelerated}");
+            Console.WriteLine($"- Vector.Count = {Vector<float>.Count}");
+            Console.WriteLine("Press any key to continue...");
+
+            Console.ReadKey();
+
             for (var i = 0; i < numberOfTests; i++)
             {
-                var testData = GenerateTestDataSingle(i, FactorSize, nProducts);
+                var testData = GenerateTestDataSingle(FactorSize, nProducts);
                 var floatTestData = 
                     CastTestData(testData, array => new FactorUsingFloatArray(array));
                 var vectorTestData =
-                    CastTestData(testData, array => new FactorUsingNumericVector());
+                    CastTestData(testData, array => new FactorUsingNumericVector(array));
 
                 Console.Write("\rRunning test {0}", i + 1);
 
@@ -70,9 +77,9 @@ namespace MFSPikeTest
             return new KeyValuePair<float[], long>(result, stopwatch.ElapsedTicks);
         }
 
-        private static KeyValuePair<float[][], float[]> GenerateTestDataSingle(int seed, int factorSize, int nProducts)
+        private static KeyValuePair<float[][], float[]> GenerateTestDataSingle(int factorSize, int nProducts)
         {
-            var random = new Random(seed);
+            var random = new Random();
 
             var customerFactor = GeneratefloatArray(random, factorSize);
 
@@ -91,7 +98,7 @@ namespace MFSPikeTest
 
             for (var i = 0; i < factorSize; i++)
             {
-                var x = random.NextDouble() * (Maximum - Maximum) + Minimum;
+                var x = random.NextDouble()/(Maximum - Minimum) + Minimum;
                 result[i] = (float)x;
             }
 

@@ -16,6 +16,22 @@ namespace MFSPikeTest
 
         public int Length { get; }
 
+        public float[] Values {
+            get
+            {
+                var retValue = new float[Length];
+                for (var i = 0; i < _valuesCount; i++)
+                {
+                    for (var j = 0; j < VectorSize; j++)
+                    {
+                        retValue[j] = _values[i][j];
+                    }
+                }
+
+                return retValue;
+            }
+        }
+
         public FactorUsingNumericVector(float[] values)
         {
             Length = values.Length;
